@@ -17,7 +17,7 @@
         "socket.io"
     ],
     "author": "Mohit",
-    "license": "ISC",
+    "license": "MIT",
     "description": "Share files securely and instantly with peer-to-peer technology",
     "dependencies": {
         "cors": "^2.8.5",
