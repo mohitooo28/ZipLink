@@ -1,0 +1,180 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap");
+@import "tailwindcss";
+
+* {
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans",
+        "Helvetica Neue", sans-serif;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+* {
+    transition-property: color, background-color, border-color,
+        text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+.drag-active {
+    transform: scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.Toastify__toast-container {
+    font-family: inherit;
+}
+
+.Toastify__toast {
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+    .Toastify__toast-container {
+        width: auto;
+        min-width: 240px;
+        max-width: 85vw;
+        left: 50% !important;
+        right: auto !important;
+        bottom: 10px !important;
+        transform: translateX(-50%) !important;
+    }
+
+    .Toastify__toast {
+        min-height: 52px;
+        padding: 10px 14px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        line-height: 1.4;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .Toastify__toast-body {
+        padding: 0;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .Toastify__close-button {
+        width: 18px;
+        height: 18px;
+        font-size: 14px;
+        opacity: 0.7;
+        align-self: flex-start;
+        margin-top: 2px;
+    }
+
+    .Toastify__progress-bar {
+        height: 3px;
+        border-radius: 0 0 10px 10px;
+    }
+}
+
+@media (min-width: 641px) {
+    .Toastify__toast-container {
+        width: 320px !important;
+        left: auto !important;
+        right: 16px !important;
+        bottom: 16px !important;
+        transform: none !important;
+    }
+
+    .Toastify__toast {
+        min-height: 56px;
+        padding: 12px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        line-height: 1.5;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+}
+
+@keyframes progress-animation {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.animated-progress {
+    background: linear-gradient(-45deg, #3b82f6, #1d4ed8, #3b82f6, #1d4ed8);
+    background-size: 400% 400%;
+    animation: progress-animation 2s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    25% {
+        background-position: 100% 50%;
+    }
+    50% {
+        background-position: 200% 50%;
+    }
+    75% {
+        background-position: 300% 50%;
+    }
+    100% {
+        background-position: 400% 50%;
+    }
+}
+
+.title-gradient-bar {
+    background: linear-gradient(
+        90deg,
+        #2563eb,
+        #3b82f6,
+        #1d4ed8,
+        #1f2937,
+        #374151,
+        #059669,
+        #10b981,
+        #34d399,
+        #2563eb,
+        #3b82f6,
+        #1d4ed8,
+        #059669
+    );
+    background-size: 600% 100%;
+    animation: gradientShift 40s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
