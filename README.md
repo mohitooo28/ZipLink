@@ -1,9 +1,7 @@
 # 🚀 ZipLink - Secure Peer-to-Peer File Sharing
 
 <div align="center">
-  <img src="frontend/src/assets/logo.svg" alt="ZipLink Logo" width="220">
-  
-  <br/>  
+  <img src="frontend/src/assets/logo.svg" alt="ZipLink Logo" width="220"> <br/>  <br/>  
   
   **A modern, secure, and lightning-fast P2P file sharing platform with WebRTC technology**
   
