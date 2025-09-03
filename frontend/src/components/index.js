@@ -1,1 +1,9 @@
-export { default as HeroSection } from "./HeroSection";export { default as FeaturesSection } from "./FeaturesSection";export { default as HowItWorksSection } from "./HowItWorksSection";export { default as BrowserCompatibilityNotice } from "./BrowserCompatibilityNotice";export { default as AnimatedBackdrop } from "./AnimatedBackdrop";export { default as FeatureCard } from "./FeatureCard";export { default as StepCard } from "./StepCard";
+export { default as HeroSection } from "./HeroSection";
+export { default as FeaturesSection } from "./FeaturesSection";
+export { default as HowItWorksSection } from "./HowItWorksSection";
+export { default as BrowserCompatibilityNotice } from "./BrowserCompatibilityNotice";
+export { default as AnimatedBackdrop } from "./AnimatedBackdrop";
+export { default as FeatureCard } from "./FeatureCard";
+export { default as StepCard } from "./StepCard";
+export { default as QRCodeDisplay } from "./QRCodeDisplay";
+export { default as QRCodeScanner } from "./QRCodeScanner";

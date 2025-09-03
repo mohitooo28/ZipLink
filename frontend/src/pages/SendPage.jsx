@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import Lottie from "lottie-react";
 import useAppStore from "../store/useAppStore";
 import WebRTCService from "../services/webrtcService";
-import { AnimatedBackdrop } from "../components";
+import { AnimatedBackdrop, QRCodeDisplay } from "../components";
 import sendFileAnimation from "../assets/lottie/send_file.json";
 import hourGlass from "../assets/lottie/hourglass.json";
 
@@ -39,6 +39,7 @@ const SendPage = () => {
   const [sessionCreated, setSessionCreated] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [sessionTimer, setSessionTimer] = useState(null);
+  const [showQRCode, setShowQRCode] = useState(false);
 
   useEffect(() => {
     setRole("sender");
@@ -368,12 +369,20 @@ const SendPage = () => {
                   {sessionCode}
                 </p>
               </div>
-              <button
-                onClick={copyToClipboard}
-                className="bg-white/20 hover:bg-white/30 text-white font-medium py-2 px-6 rounded-lg transition-colors"
-              >
-                📋 Copy Code
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={copyToClipboard}
+                  className="flex-1 bg-white/20 hover:bg-white/30 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  📋 Copy Code
+                </button>
+                <button
+                  onClick={() => setShowQRCode(true)}
+                  className="flex-1 bg-white/20 hover:bg-white/30 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  📱 Show QR
+                </button>
+              </div>
             </div>
 
             {selectedFiles.length > 0 && (
@@ -478,6 +487,12 @@ const SendPage = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <QRCodeDisplay
+          sessionCode={sessionCode}
+          isOpen={showQRCode}
+          onClose={() => setShowQRCode(false)}
+        />
       </div>
     </div>
   );

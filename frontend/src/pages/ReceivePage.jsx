@@ -5,13 +5,15 @@ import { toast } from "react-toastify";
 import Lottie from "lottie-react";
 import useAppStore from "../store/useAppStore";
 import WebRTCService from "../services/webrtcService";
-import { AnimatedBackdrop } from "../components";
+import { AnimatedBackdrop, QRCodeScanner } from "../components";
 import receiverAnimation from "../assets/lottie/receiver.json";
 
 const ReceivePage = () => {
   const navigate = useNavigate();
   const [inputCode, setInputCode] = useState("");
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const {
     sessionCode,
@@ -37,6 +39,16 @@ const ReceivePage = () => {
   useEffect(() => {
     setRole("receiver");
     setShowErrorDialog(false);
+
+    const checkMobile = () => {
+      setIsMobile(
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent
+        )
+      );
+    };
+
+    checkMobile();
     return () => {};
   }, []);
 
@@ -49,7 +61,8 @@ const ReceivePage = () => {
   }, [connectionStatus]);
 
   const handleJoinSession = async () => {
-    if (!inputCode.trim()) {
+    const codeToUse = inputCode.trim();
+    if (!codeToUse) {
       toast.error("Please enter a session code");
       return;
     }
@@ -57,7 +70,7 @@ const ReceivePage = () => {
       toast.error("WebRTC service not ready. Please refresh the page.");
       return;
     }
-    const code = inputCode.trim().toUpperCase();
+    const code = codeToUse.toUpperCase();
     setSessionCode(code);
     try {
       const socket = await webrtcService.connectToSignalingServer();
@@ -151,6 +164,15 @@ const ReceivePage = () => {
     setInputCode("");
     cleanup();
     webrtcService.cleanup();
+  };
+
+  const handleQRScan = (scannedCode) => {
+    setInputCode(scannedCode);
+    setShowQRScanner(false);
+
+    setTimeout(() => {
+      handleJoinSession();
+    }, 100);
   };
 
   return (
@@ -285,6 +307,22 @@ const ReceivePage = () => {
               >
                 Connect to Sender
               </button>
+
+              {isMobile && (
+                <div className="mt-6">
+                  <div className="flex items-center my-4">
+                    <hr className="flex-1 border-gray-300" />
+                    <span className="px-3 text-gray-500 text-sm">or</span>
+                    <hr className="flex-1 border-gray-300" />
+                  </div>
+                  <button
+                    onClick={() => setShowQRScanner(true)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    📱 Scan QR Code
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -346,6 +384,12 @@ const ReceivePage = () => {
           </motion.div>
         </div>
       )}
+
+      <QRCodeScanner
+        isOpen={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScan={handleQRScan}
+      />
     </div>
   );
 };
