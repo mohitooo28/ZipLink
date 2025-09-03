@@ -83,6 +83,12 @@ const SendPage = () => {
     }
   }, [showConnectionRequest, sessionTimer]);
 
+  useEffect(() => {
+    if (showConnectionRequest && showQRCode) {
+      setShowQRCode(false);
+    }
+  }, [showConnectionRequest, showQRCode]);
+
   const onDrop = (acceptedFiles) => {
     setSelectedFiles(acceptedFiles);
   };
@@ -124,6 +130,27 @@ const SendPage = () => {
         };
         webrtcService.createOffer(code);
       });
+
+      socket.on("session-ended", () => {
+        console.log("Session ended by other side");
+        toast.info("Session ended by other participant", {
+          autoClose: 3000,
+          toastId: "session-ended-by-other",
+        });
+        webrtcService?.cleanup();
+        navigate("/");
+      });
+
+      socket.on("peer-disconnected", () => {
+        console.log("Peer disconnected");
+        toast.warning("Other participant disconnected", {
+          autoClose: 3000,
+          toastId: "peer-disconnected",
+        });
+        webrtcService?.cleanup();
+        navigate("/");
+      });
+
       socket.emit("create-session", { sessionCode: code });
     } catch (error) {
       console.error("Failed to create session:", error);

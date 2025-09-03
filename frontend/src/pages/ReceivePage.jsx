@@ -7,6 +7,7 @@ import useAppStore from "../store/useAppStore";
 import WebRTCService from "../services/webrtcService";
 import { AnimatedBackdrop, QRCodeScanner } from "../components";
 import receiverAnimation from "../assets/lottie/receiver.json";
+import hourGlass from "../assets/lottie/hourglass.json";
 
 const ReceivePage = () => {
   const navigate = useNavigate();
@@ -102,6 +103,29 @@ const ReceivePage = () => {
         setConnectionStatus("failed");
         setWaitingForApproval(false);
       });
+
+      socket.on("session-ended", () => {
+        console.log("Session ended by other side");
+        toast.info("Session ended by other participant", {
+          autoClose: 3000,
+          toastId: "session-ended-by-other",
+        });
+        cleanup();
+        webrtcService.cleanup();
+        navigate("/");
+      });
+
+      socket.on("peer-disconnected", () => {
+        console.log("Peer disconnected");
+        toast.warning("Other participant disconnected", {
+          autoClose: 3000,
+          toastId: "peer-disconnected",
+        });
+        cleanup();
+        webrtcService.cleanup();
+        navigate("/");
+      });
+
       socket.emit("join-session", { sessionCode: code });
     } catch (error) {
       console.error("Failed to join session:", error);
@@ -166,15 +190,83 @@ const ReceivePage = () => {
     webrtcService.cleanup();
   };
 
-  const handleQRScan = (scannedCode) => {
-    setInputCode(scannedCode);
+  const handleQRScan = async (scannedCode) => {
     setShowQRScanner(false);
+    setInputCode(scannedCode);
 
-    setTimeout(() => {
-      handleJoinSession();
-    }, 100);
+    toast.success("QR code scanned! Connecting...");
+
+    if (!webrtcService) {
+      toast.error("WebRTC service not ready. Please refresh the page.");
+      return;
+    }
+
+    const code = scannedCode.trim().toUpperCase();
+    setSessionCode(code);
+
+    try {
+      const socket = await webrtcService.connectToSignalingServer();
+      setSocket(socket);
+      webrtcService.sessionCode = code;
+
+      socket.on("waiting-for-approval", () => {
+        setWaitingForApproval(true);
+        toast.info("Waiting for sender approval...");
+      });
+
+      socket.on("connection-accepted", () => {
+        setWaitingForApproval(false);
+        setConnectionStatus("connecting");
+        webrtcService.onConnectionStatusChange = (status) => {
+          setConnectionStatus(status);
+          if (status === "connected") {
+            toast.success("Connected! Ready to receive files.");
+            navigate("/transfer");
+          }
+        };
+        toast.info("WebRTC connection starting...");
+      });
+
+      socket.on("connection-rejected", () => {
+        setWaitingForApproval(false);
+        toast.error("Connection rejected by sender");
+        setConnectionStatus("failed");
+      });
+
+      socket.on("session-error", ({ message }) => {
+        toast.error(message);
+        setConnectionStatus("failed");
+        setWaitingForApproval(false);
+      });
+
+      socket.on("session-ended", () => {
+        console.log("Session ended by other side");
+        toast.info("Session ended by other participant", {
+          autoClose: 3000,
+          toastId: "session-ended-by-other",
+        });
+        cleanup();
+        webrtcService.cleanup();
+        navigate("/");
+      });
+
+      socket.on("peer-disconnected", () => {
+        console.log("Peer disconnected");
+        toast.warning("Other participant disconnected", {
+          autoClose: 3000,
+          toastId: "peer-disconnected",
+        });
+        cleanup();
+        webrtcService.cleanup();
+        navigate("/");
+      });
+
+      socket.emit("join-session", { sessionCode: code });
+    } catch (error) {
+      console.error("Failed to join session:", error);
+      toast.error("Failed to connect to server");
+    }
   };
-
   return (
     <div className="min-h-screen p-4 relative">
       <AnimatedBackdrop />
@@ -333,7 +425,11 @@ const ReceivePage = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-xl shadow-md p-8 text-center"
           >
-            <div className="animate-bounce text-6xl mb-6">⏳</div>
+            <Lottie
+              animationData={hourGlass}
+              style={{ width: 100, height: 100 }}
+              className="mx-auto"
+            />
             <h2 className="text-2xl font-bold mb-4">Waiting for Approval</h2>
             <p className="text-gray-600 mb-6">
               Your connection request has been sent to the sender. Please wait
