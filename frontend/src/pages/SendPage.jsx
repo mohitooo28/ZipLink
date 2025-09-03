@@ -37,11 +37,50 @@ const SendPage = () => {
   }, [webrtcService, setWebrtcService]);
 
   const [sessionCreated, setSessionCreated] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [sessionTimer, setSessionTimer] = useState(null);
 
   useEffect(() => {
     setRole("sender");
-    return () => {};
-  }, []);
+
+    return () => {
+      if (sessionTimer) {
+        clearTimeout(sessionTimer);
+      }
+    };
+  }, [sessionTimer]);
+
+  useEffect(() => {
+    if (sessionCreated && !showConnectionRequest) {
+      const timer = setTimeout(() => {
+        setSessionExpired(true);
+        toast.error("Session expired. Redirecting to home page...", {
+          autoClose: 3000,
+          toastId: "session-expired",
+        });
+
+        setTimeout(() => {
+          webrtcService?.cleanup();
+          navigate("/");
+        }, 3000);
+      }, 300000);
+
+      setSessionTimer(timer);
+
+      return () => {
+        if (timer) {
+          clearTimeout(timer);
+        }
+      };
+    }
+  }, [sessionCreated, showConnectionRequest, webrtcService, navigate]);
+
+  useEffect(() => {
+    if (showConnectionRequest && sessionTimer) {
+      clearTimeout(sessionTimer);
+      setSessionTimer(null);
+    }
+  }, [showConnectionRequest, sessionTimer]);
 
   const onDrop = (acceptedFiles) => {
     setSelectedFiles(acceptedFiles);
@@ -353,7 +392,7 @@ const SendPage = () => {
             )}
           </motion.div>
         )}
-        {sessionCreated && !showConnectionRequest && (
+        {sessionCreated && !showConnectionRequest && !sessionExpired && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -371,6 +410,28 @@ const SendPage = () => {
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-yellow-800">
                 <strong>Session Code:</strong> {sessionCode}
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {sessionExpired && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl shadow-md p-8 text-center"
+          >
+            <div className="text-6xl mb-6">⏰</div>
+            <h2 className="text-2xl font-bold mb-4 text-red-600">
+              Session Expired
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Your session has expired. You will be redirected to the home page
+              shortly.
+            </p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-800">
+                Sessions expire after 5 minutes of inactivity
               </p>
             </div>
           </motion.div>
