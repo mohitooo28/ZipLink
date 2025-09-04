@@ -40,6 +40,7 @@ const SendPage = () => {
   const [sessionExpired, setSessionExpired] = useState(false);
   const [sessionTimer, setSessionTimer] = useState(null);
   const [showQRCode, setShowQRCode] = useState(false);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   useEffect(() => {
     setRole("sender");
@@ -107,12 +108,16 @@ const SendPage = () => {
       toast.error("WebRTC service not ready. Please refresh the page.");
       return;
     }
+
+    setIsCreatingSession(true);
+
     try {
       const socket = await webrtcService.connectToSignalingServer();
       setSocket(socket);
       const code = generateSessionCode();
       socket.on("session-created", () => {
         setSessionCreated(true);
+        setIsCreatingSession(false);
         toast.success("Session created! Share the code with receiver.");
       });
       socket.on("connection-request", ({ receiverId }) => {
@@ -154,6 +159,7 @@ const SendPage = () => {
       socket.emit("create-session", { sessionCode: code });
     } catch (error) {
       console.error("Failed to create session:", error);
+      setIsCreatingSession(false);
       toast.error("Failed to connect to server");
     }
   };
@@ -370,9 +376,40 @@ const SendPage = () => {
             <div className="text-center">
               <button
                 onClick={handleCreateSession}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg transition-colors"
+                disabled={isCreatingSession}
+                className={`font-semibold py-3 px-8 rounded-xl shadow-lg transition-all duration-200  gap-2 min-w-[200px] ${
+                  isCreatingSession
+                    ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700 text-white"
+                }`}
               >
-                Generate Session Code
+                {isCreatingSession ? (
+                  <div className="flex items-center justify-center gap-2">
+                    Creating Session
+                    <svg
+                      className="animate-spin h-5 w-5"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                  </div>
+                ) : (
+                  "Generate Session Code"
+                )}
               </button>
             </div>
           </motion.div>
