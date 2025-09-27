@@ -132,7 +132,7 @@ npm run dev
 
 ## 💻 ZipLink Usage Walkthrough
 
-https://github.com/user-attachments/assets/79b63b9f-850c-4834-a462-49bd39e8c72f
+https://github.com/user-attachments/assets/34c1a93a-91e5-4d87-b1ca-d2af011ee25b
 
 ## 🔌 WebRTC Flow
 
