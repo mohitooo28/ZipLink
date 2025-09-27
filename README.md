@@ -130,6 +130,10 @@ npm run dev
 -   **Privacy**: Files are transferred directly between devices, never stored on servers
 -   **Browser Support**: Works on Chrome, Firefox, Safari, and Edge (WebRTC required)
 
+## 💻 ZipLink Usage Walkthrough
+
+https://github.com/user-attachments/assets/79b63b9f-850c-4834-a462-49bd39e8c72f
+
 ## 🔌 WebRTC Flow
 
 | Step | Action                     | Description                           |
