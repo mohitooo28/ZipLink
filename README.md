@@ -1,224 +1,252 @@
-# ZipLink
+# ZipLink - Secure Peer-to-Peer File Sharing
 
-Browser-to-browser file sharing over WebRTC. The sender picks files, shares a 5-digit code / QR code / link, approves the receiving device, and the files stream directly between the two browsers. File contents never pass through the ZipLink server.
+<div align="center">
+  <img src="src/app/icon.svg" alt="ZipLink Logo" width="180">
+  <br><br>
 
-Built with Next.js 16 (App Router), React 19, TypeScript (strict), Tailwind CSS 4 and Lucide icons. **No database or external signaling service is required.**
+  **Share files directly between devices with no uploads and no account**
 
----
-
-## How it works
-
-```
- Sender browser                    ZipLink server (Next.js)                 Receiver browser
- ──────────────                    ────────────────────────                 ────────────────
- POST /api/sessions  ───────────▶  reserve unique 5-digit code
-                                   + token + secrets (in memory)
- SSE /api/signal/<sender-ch> ◀───  "join-request"           ◀─────────────  POST /api/sessions/join (code [+token])
- POST …/respond (accept) ───────▶  lock session, "accept" ───────────────▶  SSE /api/signal/<request-ch>
- offer / ICE  ──── POST /api/signal/<request-ch> ──── SSE ────────────────▶  answer / ICE (same path, reversed)
-
- ════════════════════ RTCDataChannel (DTLS-encrypted, peer-to-peer) ════════════════════
- manifest ─────────────────────────────────────────────────────────────────▶ receiver reviews, picks destination
-          ◀───────────────────────────────────────────────────────────────── start
- file-start, binary chunks, file-end … ────────────────────────────────────▶ written to disk incrementally
-          ◀─────────────────────────────────────────── progress (bytes written), file-done
- done ─────────────────────────────────────────────────────────────────────▶
-          ◀───────────────────────────────────────────────────────────────── done-ack  ⇒ both show "Completed"
-```
-
-**Through the server (signaling only):** the code, an opaque session token, a coarse device label (e.g. "Chrome on Android"), the sender's accept/reject decision, SDP offers/answers and ICE candidates (which contain network addresses).
-
-**Peer-to-peer only:** file names, sizes, types and all file contents. File metadata is sent over the data channel *after* the sender approves the receiver.
-
-If a direct path is impossible and a TURN server is configured, WebRTC relays the (still DTLS-encrypted) traffic through that TURN server. ZipLink never falls back to uploading files to its own server. The UI shows a **Direct peer-to-peer** or **Relayed via TURN** badge once connected.
-
-### Key design points
-
-- **Signaling without a database.** `SessionService` keeps sessions, requests and rate limits in memory, and `SignalHub` fans messages out over Server-Sent Events. Code reservation is a synchronous check-and-set in a single-threaded process, so two senders can never hold the same live code.
-- **Per-request channels.** Each join request gets its own unguessable (128-bit) signaling channel. Guessing a code never exposes another receiver's SDP/ICE data. Clients can only publish to request channels and cannot impersonate server messages.
-- **Approval first.** The receiver gets nothing (no SDP, no file names) until the sender clicks Accept. Accepting atomically locks the session and rejects other pending requests.
-- **Lost-message resilience.** Hub channels keep a short backlog replayed by `Last-Event-ID`. The receiver re-announces `ready` until an offer arrives, offers and answers are idempotent, and both sides also poll (heartbeat / request status) as a fallback.
-- **Bounded memory.** Files are read in 1 MiB blocks via `File.slice()` and sent as ≤ 64 KiB messages. The sender pauses when `bufferedAmount` exceeds 4 MiB (resuming on `bufferedamountlow`). It also keeps at most 16 MiB in flight beyond what the receiver has confirmed **written**, so a slow disk throttles the sender instead of filling memory.
-- **Integrity.** Every chunk carries transfer id, file index, chunk index and byte offset. The receiver rejects anything out of order or past the declared size, verifies byte counts at `file-end`, and only reports completion after every file is closed.
-- **Connection lifecycle.** `PeerLink` serializes negotiation, queues early ICE candidates, and has a 30 s connect timeout. It tolerates transient `disconnected` states, ICE-restarts after a 5 s grace period, and fails cleanly after 30 s. Resuming after a page reload is **not** supported; a dropped transfer must be restarted.
+  [![Next.js](https://img.shields.io/badge/Next.js-16.4.2-black.svg?logo=next.js)](https://nextjs.org/)
+  [![React](https://img.shields.io/badge/React-19.3.0-61DAFB.svg?logo=react&logoColor=20232A)](https://react.dev/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4.svg?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+  [![WebRTC](https://img.shields.io/badge/WebRTC-Peer--to--Peer-333333.svg)](https://webrtc.org/)
+  [![Tests](https://img.shields.io/badge/tests-Vitest%20%2B%20Playwright-6E9F18.svg)](https://vitest.dev/)
+</div>
 
 ---
 
-## Getting started
+## Key Features
 
-Requires Node.js 20.9+ (tested on Node 24).
+- **Direct P2P Transfers** - Send files browser-to-browser over a WebRTC data channel.
+- **Encrypted Transport** - WebRTC provides DTLS encryption for transfer traffic.
+- **Any File Type** - Share documents, images, videos, archives, and more.
+- **Multi-file Support** - Queue and transfer multiple files in one session.
+- **Sender Approval** - The sender sees the joining device and explicitly accepts it.
+- **Simple Invitations** - Share a short 5-digit code, QR code, or invitation link.
+- **Real-time Progress** - Follow connection state, per-file progress, and overall progress.
+- **No Server Storage** - File contents and file metadata stay between the peers.
+- **NAT Traversal** - Uses STUN by default, with optional TURN relay support.
+- **Responsive Experience** - Works across desktop, tablet, and mobile browsers.
+- **Flexible Saving** - Save directly to a folder, browser storage, or memory fallback.
+
+> ZipLink's server handles session coordination and WebRTC signaling only. It never
+> receives or stores the files being transferred.
+
+## Architecture
+
+```text
+ZipLink/
+├── src/
+│   ├── app/                   # Pages, metadata, and API route handlers
+│   │   ├── page.tsx           # Home page
+│   │   ├── send/              # Sender flow
+│   │   ├── receive/           # Receiver flow
+│   │   └── api/               # Sessions, requests, status, and signaling
+│   ├── components/            # Layout, UI, send, receive, and transfer components
+│   ├── hooks/                 # Client-side session and service hooks
+│   ├── lib/
+│   │   ├── server/            # In-memory sessions, signaling, crypto, and ICE config
+│   │   ├── signaling/         # Browser API and SSE signaling clients
+│   │   ├── session/           # Sender and receiver controllers
+│   │   ├── transfer/          # Chunking, validation, progress, and file writers
+│   │   └── webrtc/            # Peer connection and data-channel lifecycle
+│   └── types/                 # Shared TypeScript types
+├── tests/
+│   ├── unit/                  # Vitest unit and service tests
+│   └── e2e/                   # Playwright browser tests
+├── .env.example               # Optional server configuration
+├── next.config.ts             # Next.js and Turbopack configuration
+└── package.json               # Scripts and dependencies
+```
+
+## How It Works
+
+```text
+ Sender browser                 ZipLink server                  Receiver browser
+ ──────────────                 ───────────────                  ────────────────
+ Create session  ────────────▶ Reserve code in memory
+                               Send join request ◀────────────── Join with code
+ Approve device  ────────────▶ Exchange SDP and ICE via SSE ◀─── Wait for approval
+
+ ════════════════ Encrypted WebRTC data channel between browsers ════════════════
+ File manifest  ─────────────────────────────────────────────▶ Review and accept
+ File chunks    ─────────────────────────────────────────────▶ Write to disk
+ Progress       ◀───────────────────────────────────────────── Confirm bytes written
+```
+
+The server relays signaling messages such as SDP offers, answers, and ICE candidates.
+The actual file names, sizes, types, and contents are exchanged only after approval
+over the peer-to-peer data channel.
+
+## Quick Start
+
+### Prerequisites
+
+- **Node.js 20.9 or newer**
+- **npm**
+- A modern browser with WebRTC support
+
+### 1. Clone and install
 
 ```bash
+git clone https://github.com/mohitooo28/ZipLink.git
+cd ZipLink
 npm install
-cp .env.example .env.local   # optional – every setting has a default
-npm run dev                  # http://localhost:3000
 ```
 
-Open `/send` in one browser and `/receive` in another (or on another device).
+### 2. Configure the environment
 
-### Testing on a phone on your LAN
+All configuration is optional for local development. To use the documented defaults:
 
-Browsers only enable folder access and browser storage (OPFS) on secure origins, and `http://192.168.x.x` is not one. Over plain HTTP, ZipLink still works but receives files into memory. For a realistic phone test, use HTTPS:
+```bash
+copy .env.example .env.local
+```
+
+On macOS or Linux, use:
+
+```bash
+cp .env.example .env.local
+```
+
+At minimum, set a private `RATE_LIMIT_SALT` before deploying.
+
+### 3. Start the development server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000), then:
+
+- Choose **Send files** in one browser.
+- Choose **Receive files** in another browser or on another device.
+- Share the displayed code, QR code, or invitation link.
+
+### Testing from a phone on your local network
+
+For the best mobile experience, use HTTPS so browser storage and folder APIs are
+available:
 
 ```bash
 npx next dev --experimental-https -H 0.0.0.0
 ```
 
-Then open `https://<your-LAN-IP>:3000` on the phone and accept the self-signed certificate warning.
+Then open `https://<your-LAN-IP>:3000` on the phone and accept the local
+self-signed certificate warning.
 
----
+## How to Use
 
-## Configuration
+### For Senders
 
-See [`.env.example`](.env.example). Everything is optional.
+1. Open ZipLink and select **Send files**.
+2. Add one or more files using the picker or drop zone.
+3. Create a session to generate a 5-digit code.
+4. Share the code, QR code, or invitation link with the receiver.
+5. Review the joining device and click **Accept**.
+6. Monitor the connection and transfer progress.
+7. Keep the page open until every file is complete.
 
-| Variable | Default | Purpose |
+### For Receivers
+
+1. Open ZipLink and select **Receive files**.
+2. Enter the sender's 5-digit code, or open the invitation link.
+3. Wait for the sender to approve the device.
+4. Review the file manifest and choose a save destination when available.
+5. Keep the page open while the files transfer.
+6. Confirm the completed files in the selected folder or browser downloads.
+
+### Recommendations
+
+- Keep both devices connected to stable networks.
+- Use a Chromium-based desktop browser for direct folder saving.
+- Use HTTPS for mobile browser storage and the best compatibility.
+- If direct connectivity fails, configure a TURN server.
+- Folders cannot be dropped directly; select their files or create an archive first.
+- A disconnected transfer must be restarted; page reload resume is not supported.
+
+## WebRTC Flow
+
+| Step | Action | Description |
 | --- | --- | --- |
-| `SESSION_WAIT_MINUTES` | `30` | How long a code stays valid while waiting for a receiver |
-| `JOIN_FAILURE_LIMIT` | `10` | Wrong-code attempts per IP per 10 min before `429` |
-| `CREATE_SESSION_LIMIT` | `30` | Sessions per IP per 10 min |
-| `RATE_LIMIT_SALT` | `ziplink` | Salt for hashing IPs used as rate-limit keys — **set this** |
-| `STUN_URLS` | Google + Cloudflare STUN | Comma-separated; set empty to disable STUN |
-| `TURN_URLS` | — | Comma-separated TURN/TURNS URLs |
-| `TURN_SECRET` | — | coturn `static-auth-secret`; ZipLink issues short-lived HMAC credentials |
-| `TURN_TTL_SECONDS` | `21600` | Lifetime of generated TURN credentials |
-| `TURN_USERNAME` / `TURN_CREDENTIAL` | — | Static TURN credentials (alternative to `TURN_SECRET`) |
+| `1` | **Create session** | The sender reserves a unique 5-digit code. |
+| `2` | **Join session** | The receiver enters the code or uses an invitation token. |
+| `3` | **Approve device** | The sender reviews the device label and accepts one receiver. |
+| `4` | **Signal peers** | SDP offers, answers, and ICE candidates travel through SSE signaling. |
+| `5` | **Connect peers** | Browsers establish a DTLS-encrypted WebRTC data channel. |
+| `6` | **Transfer files** | Files stream in validated chunks with backpressure and progress updates. |
+| `7` | **Complete** | Both browsers confirm that all files were written successfully. |
 
-TURN credentials are only returned to an authorized sender or a receiver who successfully joined. They are never served from a public endpoint.
+### Direct and relayed connections
 
-### STUN / TURN
+ZipLink uses public STUN servers by default to discover a direct route. Restrictive
+NATs, firewalls, and carrier networks may require an optional TURN relay. Even when
+TURN is used, WebRTC traffic remains DTLS-encrypted end to end. The interface shows
+whether a connection is **Direct peer-to-peer** or **Relayed via TURN**.
 
-STUN alone connects most home and mobile networks. Symmetric NATs, corporate firewalls and some carrier networks need a TURN relay. A minimal [coturn](https://github.com/coturn/coturn) config:
+## Tech Stack
 
-```
-listening-port=3478
-tls-listening-port=5349
-fingerprint
-use-auth-secret
-static-auth-secret=<same value as TURN_SECRET>
-realm=ziplink.example.com
-cert=/etc/letsencrypt/live/turn.example.com/fullchain.pem
-pkey=/etc/letsencrypt/live/turn.example.com/privkey.pem
-```
+**Application**
 
-```
-TURN_URLS=turn:turn.example.com:3478?transport=udp,turn:turn.example.com:3478?transport=tcp,turns:turn.example.com:5349?transport=tcp
-TURN_SECRET=<static-auth-secret>
-```
+- **Next.js 16 App Router** - Full-stack application and API routes
+- **React 19** - Interactive UI
+- **TypeScript** - Strict type safety
+- **Tailwind CSS 4** - Styling
+- **Lucide React** - Interface icons
+- **Sonner** - Toast notifications
+- **QRCode React** - QR invitation rendering
 
-When TURN is used, the transfer traffic is relayed through, and consumes the bandwidth of, the TURN server. It remains DTLS-encrypted end to end.
+**Core Technology**
 
----
+- **WebRTC** - Encrypted peer-to-peer file transfer
+- **Server-Sent Events** - Real-time signaling delivery
+- **In-memory session service** - Database-free session coordination
+- **STUN/TURN ICE servers** - Network traversal and optional relaying
 
-## Deployment
+**Testing**
 
-Because signaling state lives in process memory, **ZipLink must run as a single, long-lived Node.js instance**:
+- **Vitest** - Unit, protocol, state-machine, and service tests
+- **Playwright** - End-to-end transfer tests across browser contexts
 
-```bash
-npm run build
-npm start            # PORT=3000 by default
-```
 
-Good fits: a VPS, Docker container, Fly.io / Render / Railway (one instance), or any `next start` host. Put it behind HTTPS (required for folder saving and browser storage, and for most mobile browsers to behave well). If you use a reverse proxy, disable response buffering for `/api/signal/*` (Server-Sent Events). For nginx:
-
-```nginx
-location /api/signal/ {
-  proxy_pass http://127.0.0.1:3000;
-  proxy_http_version 1.1;
-  proxy_buffering off;
-  proxy_read_timeout 1h;
-}
-```
-
-**Not supported as-is:** horizontally scaled or serverless deployments (e.g. Vercel functions). Separate instances do not share memory, so a sender and a receiver could land on different instances and never see each other. Long-lived SSE streams also exceed typical function time limits. Scaling out would need a shared store/pub-sub behind `SessionService` and `SignalHub`; it was intentionally left out to keep the project database-free.
-
-Restarting the server ends all *waiting* sessions. Transfers that are already connected keep going, because they are peer-to-peer.
-
----
-
-## Browser support
-
-| Capability | Chrome / Edge (desktop) | Chrome (Android) | Firefox | Safari (macOS / iOS) |
-| --- | --- | --- | --- | --- |
-| Send | ✅ | ✅ | ✅ | ✅ 16.4+ |
-| Receive straight into a chosen folder | ✅ (`showDirectoryPicker`) | — | — | — |
-| Receive into browser storage (OPFS), then save | ✅ | ✅ | ✅ 111+ | ✅ 26+ (`createWritable`) |
-| Memory fallback (other / insecure contexts) | ✅ | ✅ | ✅ | ✅ |
-
-- **Folder mode** streams each file to disk. Existing files are never overwritten (`photo (1).jpg`, …), and partial files are deleted on failure or cancel.
-- **Browser storage mode** streams into the origin-private file system, then offers a normal download of the disk-backed file. Stale data from earlier visits is cleaned up automatically. A warning is shown if the reported storage quota looks too small.
-- **Memory mode** has to hold each file in memory until it completes. ZipLink warns above 512 MB; very large files may fail on memory-constrained devices.
-- Folders can't be dropped directly; select the files inside, or zip the folder.
-
----
-
-## Testing
+## Development and Testing
 
 ```bash
-npm run typecheck   # next typegen + tsc --noEmit
-npm run lint
-npm test            # Vitest unit tests
-npm run test:e2e    # production build + Playwright (two browser contexts, desktop + mobile viewports)
-npm run check       # typecheck + lint + unit tests + build
+npm run typecheck   # Generate Next.js types and run TypeScript checks
+npm run lint        # Run ESLint
+npm test            # Run Vitest unit tests
+npm run test:e2e    # Build and run Playwright end-to-end tests
+npm run check       # Run typecheck, lint, unit tests, and build
 ```
 
-The E2E suite uses your installed Google Chrome (`channel: "chrome"`). Set `PW_CHANNEL=` to use Playwright's bundled Chromium after `npx playwright install chromium`. STUN is disabled during E2E runs, so the tests never leave the machine.
+The test suite covers signaling validation, session lifecycle, rate limiting,
+filename sanitization, chunk framing, backpressure, cancellation, disconnects,
+ICE negotiation, and complete multi-file transfers.
 
-**Unit tests cover:** formatting helpers, code generation, chunk framing and validation (offsets beyond 4 GiB, zero-byte files, partial last chunks), control and signaling message validation, filename sanitization and duplicate numbering, state-machine transitions, and the session service. Service tests include code reservation, collision retries, rate limiting, approval locking, rejection, cancellation, expiry and purge. Transfer-engine tests stream multiple files byte-for-byte through a simulated channel, checking empty, duplicate and Unicode names, backpressure and in-flight bounds, sender and receiver cancellation, tampered chunks and mid-transfer disconnects. `PeerLink` tests cover negotiation, candidate queuing, timeouts, transient disconnects, ICE restart and cleanup.
+## Security and Privacy
 
-**E2E tests cover:** a full multi-file transfer with SHA-256 comparison of every downloaded file, rejection, invalid codes, expired invitation links, joining via the QR/share link, sender cancellation mid-transfer, the sender closing the tab mid-transfer, the readiness indicator, and no horizontal overflow at 1280 px and 390 px widths.
+- Files are never uploaded to or stored by the ZipLink server.
+- The 5-digit code is a convenience identifier, not a secret; guessing is rate-limited.
+- Senders must explicitly approve a receiver before metadata or file contents are shared.
+- Invitation links contain a high-entropy token and stale or invalid tokens are rejected.
+- Session secrets are hashed and compared safely on the server.
+- Signaling and transfer messages are schema-validated.
+- Received file names are sanitized before being written to disk.
+- A TURN relay can see encrypted traffic metadata, but cannot decrypt file contents.
+
+## License
+
+No license file is currently included in this repository. Add a `LICENSE` file and
+update this section if you intend to publish ZipLink under a specific open-source
+license.
 
 ---
 
-## Troubleshooting
+<div align="center">
 
-| Symptom | Likely cause / fix |
-| --- | --- |
-| Stuck on "Establishing peer-to-peer connection", then "couldn't reach each other" | NAT/firewall blocks direct UDP. Configure a TURN server (`TURN_URLS` + `TURN_SECRET`). |
-| Works on the same Wi-Fi but not across networks | STUN disabled or blocked. Check `STUN_URLS`, and allow outbound UDP 3478/19302. |
-| "Signaling service unreachable" on the home page | Server down, or a proxy blocks `/api/*`. |
-| Receiver never sees the approval / the page hangs | A proxy is buffering SSE. Disable buffering for `/api/signal/` (see Deployment). |
-| Sender and receiver never find each other in production | More than one server instance is running. ZipLink needs a single instance. |
-| "Relayed via TURN" when you expected direct | One side is on a restrictive network. This works, but speed depends on the TURN server. |
-| No "Choose folder" option | The browser lacks `showDirectoryPicker`, or the page isn't served over HTTPS. |
-| "Not enough storage space" | Browser storage quota exceeded. Use a Chromium desktop browser with folder mode, or free up disk space. |
-| "Too many incorrect attempts" | Rate limit for wrong codes. Wait for the shown period or use the invitation link. |
+**Built with ❤️ for secure, fast, and private file sharing**
 
----
+[🌟 Star this repo](../../stargazers) • [🐛 Report Bug](../../issues) • [💡 Request Feature](../../issues)
 
-## Security notes
 
-- The 5-digit code is a convenience, **not** a secret (100,000 possibilities). Protection comes from:
-  - rate-limited guessing;
-  - short code lifetime;
-  - the sender explicitly approving each device, shown with a device label;
-  - a single accepted receiver per session.
-- QR / link invitations carry a 256-bit token; a link with a wrong or stale token is refused. The receive page removes the token from the address bar and sets `Referrer-Policy: no-referrer`.
-- Session tokens and secrets are stored only as SHA-256 hashes and compared in constant time. Rate-limit keys are salted IP hashes.
-- All data-channel and signaling messages are schema-validated, and received filenames are sanitized before anything is written.
-- WebRTC provides transport encryption (DTLS/SRTP). ZipLink adds no extra application-level encryption.
-
----
-
-## Project structure
-
-```
-src/
-  app/                     pages (/, /send, /receive) and API route handlers
-    api/sessions/…         create, join, heartbeat, respond, close
-    api/requests/…         receiver request status / cancel
-    api/signal/[channel]   SSE subscribe (GET) + publish (POST)
-  components/              layout, send, receive, transfer, shared, ui
-  hooks/                   useSenderSession, useReceiverSession, useServiceStatus, useNow
-  lib/
-    server/                config, crypto, ICE servers, SessionService, SignalHub (server-only)
-    signaling/             browser API client + SSE signaling channel
-    webrtc/                PeerLink (RTCPeerConnection lifecycle), ChannelIO (framing + backpressure)
-    transfer/              chunk protocol, sender, receiver, save targets, progress, state machine
-    session/               Sender/Receiver controllers orchestrating everything for the UI
-    utils/                 formatting, codes, randomness, message validation
-  types/                   session, signaling, transfer types
-tests/
-  unit/                    Vitest
-  e2e/                     Playwright
-```
+</div>
