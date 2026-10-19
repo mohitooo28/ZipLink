@@ -1,26 +1,291 @@
 @import "tailwindcss";
 
+/*
+ * ZipLink design tokens. Neutral surfaces with a single electric-violet
+ * accent; every color is a variable so light and dark share one set of
+ * utility classes.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --bg: #f6f6f8;
+  --surface: #ffffff;
+  --surface-2: #f1f1f4;
+  --surface-3: #e8e8ec;
+  --line: #e3e3e8;
+  --line-strong: #d1d1d8;
+  --fg: #0c0c12;
+  --fg-2: #3c3c46;
+  --muted: #6e6e7a;
+  --accent: #5546ff;
+  --accent-hover: #4637f0;
+  --accent-fg: #ffffff;
+  --accent-soft: color-mix(in oklab, var(--accent) 10%, transparent);
+  --accent-line: color-mix(in oklab, var(--accent) 28%, transparent);
+  --success: #15803d;
+  --success-soft: color-mix(in oklab, var(--success) 11%, transparent);
+  --danger: #dc2626;
+  --danger-soft: color-mix(in oklab, var(--danger) 10%, transparent);
+  --warning: #b45309;
+  --warning-soft: color-mix(in oklab, var(--warning) 12%, transparent);
+  --shadow-color: 230 20% 20%;
+  --glow: color-mix(in oklab, var(--accent) 14%, transparent);
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #09090c;
+    --surface: #111116;
+    --surface-2: #17171e;
+    --surface-3: #202029;
+    --line: #23232c;
+    --line-strong: #31313d;
+    --fg: #f4f4f7;
+    --fg-2: #c9c9d3;
+    --muted: #8d8d9b;
+    --accent: #7b6fff;
+    --accent-hover: #8e84ff;
+    --accent-fg: #ffffff;
+    --success: #34d399;
+    --danger: #f87171;
+    --warning: #fbbf24;
+    --shadow-color: 240 30% 2%;
+    --glow: color-mix(in oklab, var(--accent) 18%, transparent);
+    color-scheme: dark;
   }
 }
 
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --shadow-card: 0 1px 2px hsl(var(--shadow-color) / 0.06), 0 8px 24px -12px hsl(var(--shadow-color) / 0.12);
+  --shadow-lift: 0 1px 2px hsl(var(--shadow-color) / 0.08), 0 18px 40px -18px hsl(var(--shadow-color) / 0.28);
+  --animate-fade-in: fade-in 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
+  background-image: radial-gradient(60rem 28rem at 50% -12rem, var(--glow), transparent 70%);
+  background-repeat: no-repeat;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.45);
+  backdrop-filter: blur(2px);
+}
+
+/* ---------- Home page effects (CSS only) ---------- */
+
+.dot-grid {
+  background-image: radial-gradient(color-mix(in oklab, var(--fg) 14%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 60% 55% at 50% 40%, black, transparent 75%);
+}
+
+.aurora {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.55;
+  will-change: transform;
+}
+
+.aurora-a {
+  background: radial-gradient(circle, var(--accent), transparent 65%);
+  animation: aurora-a 18s ease-in-out infinite alternate;
+}
+
+.aurora-b {
+  background: radial-gradient(circle, #22d3ee, transparent 65%);
+  opacity: 0.32;
+  animation: aurora-b 22s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-a {
+  from {
+    transform: translate3d(-12%, -6%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(14%, 8%, 0) scale(1.15);
+  }
+}
+
+@keyframes aurora-b {
+  from {
+    transform: translate3d(10%, 4%, 0) scale(1.1);
+  }
+  to {
+    transform: translate3d(-14%, -8%, 0) scale(0.9);
+  }
+}
+
+.text-shimmer {
+  background: linear-gradient(100deg, var(--accent) 20%, #22d3ee 45%, var(--accent) 70%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%,
+  100% {
+    background-position: 100% 0;
+  }
+  50% {
+    background-position: 0% 0;
+  }
+}
+
+.rise {
+  animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* Data packets travelling along the link between two devices. */
+.beam {
+  position: relative;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, var(--accent-line), transparent);
+  overflow: visible;
+  container-type: inline-size;
+}
+
+.beam::before,
+.beam::after,
+.beam > span {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 28px;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, var(--accent));
+  box-shadow: 0 0 12px var(--accent);
+  animation: packet 2.4s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.beam::after {
+  animation-delay: 0.8s;
+}
+
+.beam > span {
+  animation-delay: 1.6s;
+}
+
+@keyframes packet {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(100cqw - 28px));
+    opacity: 0;
+  }
+}
+
+.node-glow {
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 0 0 8px color-mix(in oklab, var(--accent) 7%, transparent),
+    0 12px 30px -12px color-mix(in oklab, var(--accent) 45%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beam::before,
+  .beam::after,
+  .beam > span,
+  .aurora {
+    animation: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
