@@ -1,55 +1,52 @@
 @import "tailwindcss";
 
 /*
- * ZipLink design tokens. Neutral surfaces with a single electric-violet
- * accent; every color is a variable so light and dark share one set of
- * utility classes.
+ * ZipLink design tokens — a strict black & white system. The "accent" is the
+ * foreground colour itself (black on light, white on dark); red is reserved
+ * for errors only. Every colour is a variable so both schemes share classes.
  */
 :root {
-  --bg: #f6f6f8;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f1f1f4;
-  --surface-3: #e8e8ec;
-  --line: #e3e3e8;
-  --line-strong: #d1d1d8;
-  --fg: #0c0c12;
-  --fg-2: #3c3c46;
-  --muted: #6e6e7a;
-  --accent: #5546ff;
-  --accent-hover: #4637f0;
+  --surface-2: #f5f5f5;
+  --surface-3: #ebebeb;
+  --line: #e8e8e8;
+  --line-strong: #d4d4d4;
+  --fg: #0a0a0a;
+  --fg-2: #404040;
+  --muted: #737373;
+  --accent: #0a0a0a;
+  --accent-hover: #262626;
   --accent-fg: #ffffff;
-  --accent-soft: color-mix(in oklab, var(--accent) 10%, transparent);
-  --accent-line: color-mix(in oklab, var(--accent) 28%, transparent);
-  --success: #15803d;
-  --success-soft: color-mix(in oklab, var(--success) 11%, transparent);
+  --accent-soft: color-mix(in oklab, var(--fg) 5%, transparent);
+  --accent-line: color-mix(in oklab, var(--fg) 22%, transparent);
+  --success: #0a0a0a;
+  --success-soft: color-mix(in oklab, var(--fg) 6%, transparent);
   --danger: #dc2626;
-  --danger-soft: color-mix(in oklab, var(--danger) 10%, transparent);
-  --warning: #b45309;
-  --warning-soft: color-mix(in oklab, var(--warning) 12%, transparent);
-  --shadow-color: 230 20% 20%;
-  --glow: color-mix(in oklab, var(--accent) 14%, transparent);
+  --danger-soft: color-mix(in oklab, var(--danger) 8%, transparent);
+  --warning: #404040;
+  --warning-soft: color-mix(in oklab, var(--fg) 6%, transparent);
+  --shadow-color: 0 0% 0%;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #09090c;
-    --surface: #111116;
-    --surface-2: #17171e;
-    --surface-3: #202029;
-    --line: #23232c;
-    --line-strong: #31313d;
-    --fg: #f4f4f7;
-    --fg-2: #c9c9d3;
-    --muted: #8d8d9b;
-    --accent: #7b6fff;
-    --accent-hover: #8e84ff;
-    --accent-fg: #ffffff;
-    --success: #34d399;
+    --bg: #000000;
+    --surface: #0a0a0a;
+    --surface-2: #141414;
+    --surface-3: #1f1f1f;
+    --line: #1f1f1f;
+    --line-strong: #2e2e2e;
+    --fg: #fafafa;
+    --fg-2: #d4d4d4;
+    --muted: #8a8a8a;
+    --accent: #fafafa;
+    --accent-hover: #e5e5e5;
+    --accent-fg: #0a0a0a;
+    --success: #fafafa;
     --danger: #f87171;
-    --warning: #fbbf24;
-    --shadow-color: 240 30% 2%;
-    --glow: color-mix(in oklab, var(--accent) 18%, transparent);
+    --warning: #d4d4d4;
     color-scheme: dark;
   }
 }
@@ -77,8 +74,9 @@
   --color-warning-soft: var(--warning-soft);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --shadow-card: 0 1px 2px hsl(var(--shadow-color) / 0.06), 0 8px 24px -12px hsl(var(--shadow-color) / 0.12);
-  --shadow-lift: 0 1px 2px hsl(var(--shadow-color) / 0.08), 0 18px 40px -18px hsl(var(--shadow-color) / 0.28);
+  /* Hairline borders do the work; shadows stay barely there. */
+  --shadow-card: 0 1px 2px hsl(var(--shadow-color) / 0.04);
+  --shadow-lift: 0 1px 2px hsl(var(--shadow-color) / 0.04), 0 16px 40px -24px hsl(var(--shadow-color) / 0.18);
   --animate-fade-in: fade-in 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
 }
@@ -97,7 +95,7 @@
 @keyframes pulse-ring {
   0% {
     transform: scale(0.85);
-    opacity: 0.55;
+    opacity: 0.5;
   }
   100% {
     transform: scale(1.9);
@@ -112,93 +110,30 @@ html {
 
 body {
   background-color: var(--bg);
-  background-image: radial-gradient(60rem 28rem at 50% -12rem, var(--glow), transparent 70%);
-  background-repeat: no-repeat;
   color: var(--fg);
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
 }
 
 ::selection {
-  background: var(--accent-soft);
+  background: var(--fg);
+  color: var(--bg);
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--fg);
   outline-offset: 2px;
 }
 
 dialog::backdrop {
-  background: rgb(0 0 0 / 0.45);
+  background: rgb(0 0 0 / 0.5);
   backdrop-filter: blur(2px);
 }
 
-/* ---------- Home page effects (CSS only) ---------- */
-
-.dot-grid {
-  background-image: radial-gradient(color-mix(in oklab, var(--fg) 14%, transparent) 1px, transparent 1px);
-  background-size: 22px 22px;
-  mask-image: radial-gradient(ellipse 60% 55% at 50% 40%, black, transparent 75%);
-}
-
-.aurora {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(70px);
-  opacity: 0.55;
-  will-change: transform;
-}
-
-.aurora-a {
-  background: radial-gradient(circle, var(--accent), transparent 65%);
-  animation: aurora-a 18s ease-in-out infinite alternate;
-}
-
-.aurora-b {
-  background: radial-gradient(circle, #22d3ee, transparent 65%);
-  opacity: 0.32;
-  animation: aurora-b 22s ease-in-out infinite alternate;
-}
-
-@keyframes aurora-a {
-  from {
-    transform: translate3d(-12%, -6%, 0) scale(1);
-  }
-  to {
-    transform: translate3d(14%, 8%, 0) scale(1.15);
-  }
-}
-
-@keyframes aurora-b {
-  from {
-    transform: translate3d(10%, 4%, 0) scale(1.1);
-  }
-  to {
-    transform: translate3d(-14%, -8%, 0) scale(0.9);
-  }
-}
-
-.text-shimmer {
-  background: linear-gradient(100deg, var(--accent) 20%, #22d3ee 45%, var(--accent) 70%);
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: shimmer 6s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0%,
-  100% {
-    background-position: 100% 0;
-  }
-  50% {
-    background-position: 0% 0;
-  }
-}
+/* ---------- Entrance ---------- */
 
 .rise {
-  animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   animation-delay: calc(var(--i, 0) * 90ms);
 }
 
@@ -215,13 +150,128 @@ dialog::backdrop {
   }
 }
 
+/* ---------- Landing page motion (CSS only, monochrome) ---------- */
+
+/* Concentric rings that slowly expand from the centre. */
+.rings > span {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 22rem;
+  height: 22rem;
+  border-radius: 9999px;
+  border: 1px solid var(--line-strong);
+  opacity: 0;
+  animation: ring-expand 9s linear infinite;
+}
+
+.rings > span:nth-child(2) {
+  animation-delay: 3s;
+}
+
+.rings > span:nth-child(3) {
+  animation-delay: 6s;
+}
+
+@keyframes ring-expand {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+/* Small "devices" orbiting the hero on faint dashed tracks. */
+.orbit {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  border-radius: 9999px;
+  border: 1px dashed var(--line);
+  animation: spin 40s linear infinite;
+}
+
+.orbit-reverse {
+  animation-direction: reverse;
+  animation-duration: 60s;
+}
+
+.orbit > i {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 9999px;
+  background: var(--fg);
+}
+
+.orbit > i:nth-child(2) {
+  top: auto;
+  bottom: -4px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  background: var(--bg);
+  border: 1.5px solid var(--fg);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* A line that draws itself under a word, pauses, then wipes away. */
+.draw-underline {
+  position: relative;
+  white-space: nowrap;
+}
+
+.draw-underline::after {
+  content: "";
+  position: absolute;
+  left: 0.04em;
+  right: 0.04em;
+  bottom: -0.06em;
+  height: 0.07em;
+  border-radius: 9999px;
+  background: currentColor;
+  transform-origin: left;
+  animation: draw 5s cubic-bezier(0.65, 0, 0.35, 1) 0.8s infinite;
+}
+
+@keyframes draw {
+  0% {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  30%,
+  70% {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  70.01% {
+    transform-origin: right;
+  }
+  100% {
+    transform: scaleX(0);
+    transform-origin: right;
+  }
+}
+
 /* Data packets travelling along the link between two devices. */
 .beam {
   position: relative;
-  height: 2px;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, transparent, var(--accent-line), transparent);
-  overflow: visible;
+  height: 1px;
+  background: var(--line-strong);
   container-type: inline-size;
 }
 
@@ -232,12 +282,11 @@ dialog::backdrop {
   position: absolute;
   top: 50%;
   left: 0;
-  width: 28px;
-  height: 4px;
-  margin-top: -2px;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
   border-radius: 9999px;
-  background: linear-gradient(90deg, transparent, var(--accent));
-  box-shadow: 0 0 12px var(--accent);
+  background: var(--fg);
   animation: packet 2.4s cubic-bezier(0.5, 0, 0.5, 1) infinite;
 }
 
@@ -259,24 +308,25 @@ dialog::backdrop {
     opacity: 1;
   }
   100% {
-    transform: translateX(calc(100cqw - 28px));
+    transform: translateX(calc(100cqw - 6px));
     opacity: 0;
   }
 }
 
-.node-glow {
-  box-shadow:
-    0 0 0 1px var(--line),
-    0 0 0 8px color-mix(in oklab, var(--accent) 7%, transparent),
-    0 12px 30px -12px color-mix(in oklab, var(--accent) 45%, transparent);
+/* Endless, slow strip of file types. */
+.marquee {
+  mask-image: linear-gradient(90deg, transparent, black 15%, black 85%, transparent);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .beam::before,
-  .beam::after,
-  .beam > span,
-  .aurora {
-    animation: none !important;
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
   }
 }
 
@@ -287,5 +337,12 @@ dialog::backdrop {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  .rings,
+  .orbit {
+    display: none;
+  }
+  .draw-underline::after {
+    transform: scaleX(1);
   }
 }

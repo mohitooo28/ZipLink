@@ -1,7 +1,7 @@
 /** Public site details used for metadata, sitemap and structured data. */
 export const SITE = {
   name: "ZipLink",
-  title: "ZipLink — Share files directly between devices",
+  title: "ZipLink",
   description:
     "Free peer-to-peer file sharing in your browser. Send files of any type and size straight to another device with a 5-digit code. No uploads, no account.",
   keywords: [
@@ -18,7 +18,11 @@ export const SITE = {
 
 /** Absolute origin of the deployment; set NEXT_PUBLIC_SITE_URL in production. */
 export function siteUrl(): URL {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000");
   try {
     return new URL(raw);
   } catch {

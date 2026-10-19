@@ -1,70 +1,77 @@
 import Link from "next/link";
-import { ArrowDownToLine, ArrowUpFromLine, Laptop, Smartphone } from "lucide-react";
+import { ArrowRight, Laptop, Smartphone } from "lucide-react";
 import { ServiceStatus } from "@/components/shared/service-status";
 import { buttonClasses } from "@/components/ui/button";
 
+const FILE_TYPES = [".pdf", ".jpg", ".zip", ".mp4", ".psd", ".docx", ".mov", ".png", ".fig", ".mp3", ".key", ".raw", ".csv", ".apk"];
+
 export default function Home() {
   return (
-    <section className="relative isolate flex flex-1 items-center overflow-hidden">
-      {/* Ambient background */}
+    <section className="relative isolate flex flex-1 flex-col overflow-hidden">
+      {/* Ambient motion */}
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
-        <div className="dot-grid absolute inset-0" />
-        <div className="aurora aurora-a top-[-10%] left-1/2 size-[34rem] -translate-x-1/2" />
-        <div className="aurora aurora-b top-[10%] left-[55%] size-[26rem]" />
+        <div className="rings absolute inset-0">
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className="orbit size-[30rem] sm:size-[40rem]">
+          <i />
+          <i />
+        </div>
+        <div className="orbit orbit-reverse size-[44rem] opacity-60 sm:size-[58rem]">
+          <i />
+        </div>
       </div>
 
-      <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-10 px-4 py-20 text-center sm:py-28">
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-10 px-4 pt-28 pb-16 text-center">
         <div className="rise" style={{ ["--i" as string]: 0 }}>
           <ServiceStatus />
         </div>
 
         <div className="flex flex-col gap-5">
           <h1
-            className="rise text-5xl leading-[1.02] font-semibold tracking-tight text-balance sm:text-7xl"
+            className="rise text-5xl leading-[1.04] font-semibold tracking-[-0.04em] text-balance sm:text-7xl"
             style={{ ["--i" as string]: 1 }}
           >
-            Your files. Your devices. <span className="text-shimmer">Directly.</span>
+            Your files. Your devices. <span className="draw-underline">Directly.</span>
           </h1>
-          <p
-            className="rise mx-auto max-w-md text-base text-pretty text-muted sm:text-lg"
-            style={{ ["--i" as string]: 2 }}
-          >
-            Share files of any type, directly between devices. No file uploads. No account required.
+          <p className="rise mx-auto max-w-sm text-pretty text-muted sm:text-lg" style={{ ["--i" as string]: 2 }}>
+            Share any file between devices. No uploads, no account.
           </p>
         </div>
 
-        <div
-          className="rise flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row"
-          style={{ ["--i" as string]: 3 }}
-        >
-          <Link href="/send" className={buttonClasses("primary", "lg", "rounded-full px-7")}>
-            <ArrowUpFromLine aria-hidden="true" />
+        <div className="rise flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row" style={{ ["--i" as string]: 3 }}>
+          <Link href="/send" className={buttonClasses("primary", "lg", "group rounded-full px-8")}>
             Send files
+            <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </Link>
-          <Link href="/receive" className={buttonClasses("secondary", "lg", "rounded-full px-7")}>
-            <ArrowDownToLine aria-hidden="true" />
+          <Link href="/receive" className={buttonClasses("secondary", "lg", "rounded-full px-8")}>
             Receive files
           </Link>
         </div>
 
-        <div
-          className="rise mt-6 flex w-full max-w-sm items-center gap-4"
-          style={{ ["--i" as string]: 4 }}
-          aria-hidden="true"
-        >
-          <span className="node-glow grid size-12 shrink-0 place-items-center rounded-2xl bg-surface text-fg-2">
-            <Laptop className="size-5" />
+        <div className="rise mt-4 flex w-full max-w-xs items-center gap-4" style={{ ["--i" as string]: 4 }} aria-hidden="true">
+          <span className="grid size-11 shrink-0 place-items-center rounded-full border border-line-strong bg-bg text-fg">
+            <Laptop className="size-[18px]" strokeWidth={1.5} />
           </span>
           <div className="beam flex-1">
             <span />
           </div>
-          <span className="node-glow grid size-12 shrink-0 place-items-center rounded-2xl bg-surface text-fg-2">
-            <Smartphone className="size-5" />
+          <span className="grid size-11 shrink-0 place-items-center rounded-full border border-line-strong bg-bg text-fg">
+            <Smartphone className="size-[18px]" strokeWidth={1.5} />
           </span>
         </div>
-        <p className="rise -mt-6 text-xs text-muted" style={{ ["--i" as string]: 5 }}>
-          Peer-to-peer · encrypted · never stored
-        </p>
+      </div>
+
+      <div className="rise marquee w-full overflow-hidden pb-8" style={{ ["--i" as string]: 5 }} aria-hidden="true">
+        <div className="marquee-track font-mono text-sm text-muted">
+          {[...FILE_TYPES, ...FILE_TYPES].map((type, index) => (
+            <span key={index} className="shrink-0 pr-10">
+              {type}
+            </span>
+          ))}
+        </div>
       </div>
     </section>
   );

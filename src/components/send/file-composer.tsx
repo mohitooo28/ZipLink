@@ -39,7 +39,7 @@ function FileStack({ active }: { active: boolean }) {
       <span
         className={cn(
           card,
-          "top-0 left-1/2 -ml-7 bg-accent text-accent-fg shadow-[0_14px_30px_-12px_var(--accent)]",
+          "top-0 left-1/2 -ml-7 bg-accent text-accent-fg",
           active ? "-translate-y-2 scale-105" : "",
           "group-hover:-translate-y-2",
         )}
