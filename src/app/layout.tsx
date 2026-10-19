@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { AppHeader } from "@/components/layout/app-header";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,13 +15,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const TITLE = "ZipLink";
+const DESCRIPTION = "Share anything, anywhere, instantly";
+
 export const metadata: Metadata = {
+  metadataBase: siteUrl(),
   title: {
-    default: "ZipLink — Share files directly between devices",
+    default: TITLE,
     template: "%s · ZipLink",
   },
-  description:
-    "Send files of any type straight from one browser to another over a peer-to-peer connection. No uploads, no account.",
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: TITLE,
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {
@@ -34,11 +50,17 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
       <body className="relative flex min-h-dvh flex-col">
         <AppHeader />
         <main className="flex w-full flex-1 flex-col">{children}</main>
-        <Toaster position="bottom-center" toastOptions={{ className: "font-sans" }} />
+        <Toaster
+          position="bottom-center"
+          toastOptions={{ className: "font-sans" }}
+        />
       </body>
     </html>
   );
